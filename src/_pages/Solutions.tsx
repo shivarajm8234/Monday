@@ -1,24 +1,16 @@
-// Solutions.tsx
 import React, { useState, useEffect, useRef } from "react"
 import { useQuery, useQueryClient } from "react-query"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism"
-
-import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
 import {
   Toast,
-  ToastDescription,
-  ToastMessage,
   ToastTitle,
-  ToastVariant
+  ToastDescription,
+  ToastVariant,
+  ToastMessage
 } from "../components/ui/toast"
 import { ProblemStatementData } from "../types/solutions"
 import { AudioResult } from "../types/audio"
-import SolutionCommands from "../components/Solutions/SolutionCommands"
 import StructuredSolution from "../components/Solutions/StructuredSolution"
 import Debug from "./Debug"
-
-// (Using global ElectronAPI type from src/types/electron.d.ts)
 
 export const ContentSection = ({
   title,
@@ -29,22 +21,21 @@ export const ContentSection = ({
   content: React.ReactNode
   isLoading: boolean
 }) => {
-  // Check if content is a string and contains structured sections
-  const isStructuredContent = typeof content === 'string' && content.includes('=== PYTHON SOLUTION ===')
-  
+  const isStructuredContent = typeof content === "string" && content.includes("=== PYTHON SOLUTION ===")
+
   return (
     <div className="space-y-2">
-      <h2 className="text-[13px] font-medium text-white tracking-wide">
+      <h2 className="text-[13px] font-semibold text-green-500 tracking-wide">
         {title}
       </h2>
       {isLoading ? (
-        <div className="mt-4 flex">
+        <div className="flex">
           <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
-            Extracting problem statement...
+            Loading...
           </p>
         </div>
       ) : (
-        <div className="text-[13px] leading-[1.4] text-gray-100 max-w-[600px]">
+        <div className="text-[13px] leading-[1.4] text-gray-200 max-w-[600px] font-mono">
           {isStructuredContent ? (
             <StructuredSolution content={content as string} />
           ) : (
@@ -55,48 +46,37 @@ export const ContentSection = ({
     </div>
   )
 }
-const SolutionSection = ({
+
+export const SolutionSection = ({
   title,
   content,
   isLoading
 }: {
   title: string
-  content: React.ReactNode
+  content: string | null
   isLoading: boolean
-}) => (
-  <div className="space-y-2">
-    <h2 className="text-[13px] font-medium text-white tracking-wide">
-      {title}
-    </h2>
-    {isLoading ? (
-      <div className="space-y-1.5">
-        <div className="mt-4 flex">
+}) => {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-[13px] font-semibold text-green-500 tracking-wide">
+        {title}
+      </h2>
+      {isLoading ? (
+        <div className="flex">
           <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
-            Loading solutions...
+            Generating solution...
           </p>
         </div>
-      </div>
-    ) : (
-      <div className="w-full">
-        <SyntaxHighlighter
-          showLineNumbers
-          language="python"
-          style={dracula}
-          customStyle={{
-            maxWidth: "100%",
-            margin: 0,
-            padding: "1rem",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all"
-          }}
-          wrapLongLines={true}
-        >
-          {content as string}
-        </SyntaxHighlighter>
-      </div>
-    )}
-  </div>
-)
+      ) : (
+        content && (
+          <div className="text-[13px] leading-[1.4] text-gray-200 font-mono">
+            <StructuredSolution content={content} />
+          </div>
+        )
+      )}
+    </div>
+  )
+}
 
 export const ComplexitySection = ({
   timeComplexity,
@@ -106,46 +86,40 @@ export const ComplexitySection = ({
   timeComplexity: string | null
   spaceComplexity: string | null
   isLoading: boolean
-}) => (
-  <div className="space-y-2">
-    <h2 className="text-[13px] font-medium text-white tracking-wide">
-      Complexity (Updated)
-    </h2>
-    {isLoading ? (
-      <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
-        Calculating complexity...
-      </p>
-    ) : (
-      <div className="space-y-1">
-        <div className="flex items-start gap-2 text-[13px] leading-[1.4] text-gray-100">
-          <div className="w-1 h-1 rounded-full bg-blue-400/80 mt-2 shrink-0" />
+}) => {
+  return (
+    <div className="space-y-2 border-t border-[#262626] pt-3">
+      <h2 className="text-[13px] font-semibold text-green-500 tracking-wide">
+        Complexity
+      </h2>
+      {isLoading ? (
+        <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
+          Analyzing complexity...
+        </p>
+      ) : (
+        <div className="flex gap-4 text-xs text-neutral-400 font-mono">
           <div>
-            <strong>Time:</strong> {timeComplexity}
+            Time Complexity:{" "}
+            <span className="text-white font-medium">{timeComplexity}</span>
+          </div>
+          <div>
+            Space Complexity:{" "}
+            <span className="text-white font-medium">{spaceComplexity}</span>
           </div>
         </div>
-        <div className="flex items-start gap-2 text-[13px] leading-[1.4] text-gray-100">
-          <div className="w-1 h-1 rounded-full bg-blue-400/80 mt-2 shrink-0" />
-          <div>
-            <strong>Space:</strong> {spaceComplexity}
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-)
+      )}
+    </div>
+  )
+}
 
 interface SolutionsProps {
   setView: React.Dispatch<React.SetStateAction<"queue" | "solutions" | "debug">>
 }
+
 const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
   const queryClient = useQueryClient()
   const contentRef = useRef<HTMLDivElement>(null)
 
-  // Audio recording state
-  const [audioRecording, setAudioRecording] = useState(false)
-  const [audioResult, setAudioResult] = useState<AudioResult | null>(null)
-
-  const [debugProcessing, setDebugProcessing] = useState(false)
   const [problemStatementData, setProblemStatementData] =
     useState<ProblemStatementData | null>(null)
   const [solutionData, setSolutionData] = useState<string | null>(null)
@@ -156,7 +130,11 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
   const [spaceComplexityData, setSpaceComplexityData] = useState<string | null>(
     null
   )
-  const [customContent, setCustomContent] = useState<string | null>(null)
+
+  const [, setAudioRecording] = useState(false)
+  const [, setAudioResult] = useState<AudioResult | null>(null)
+  const [, setCustomContent] = useState<string | null>(null)
+  const [debugProcessing, setDebugProcessing] = useState(false)
 
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState<ToastMessage>({
@@ -165,12 +143,9 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
     variant: "neutral"
   })
 
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const [tooltipHeight, setTooltipHeight] = useState(0)
-
   const [isResetting, setIsResetting] = useState(false)
 
-  const { data: extraScreenshots = [], refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
+  const { refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
     ["extras"],
     async () => {
       try {
@@ -196,33 +171,11 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
     setToastOpen(true)
   }
 
-  const handleDeleteExtraScreenshot = async (index: number) => {
-    const screenshotToDelete = extraScreenshots[index]
-
-    try {
-      const response = await window.electronAPI.deleteScreenshot(
-        screenshotToDelete.path
-      )
-
-      if (response.success) {
-        refetch() // Refetch screenshots instead of managing state directly
-      } else {
-        console.error("Failed to delete extra screenshot:", response.error)
-      }
-    } catch (error) {
-      console.error("Error deleting extra screenshot:", error)
-    }
-  }
-
   useEffect(() => {
-    // Height update logic
     const updateDimensions = () => {
       if (contentRef.current) {
-        let contentHeight = contentRef.current.scrollHeight
+        const contentHeight = contentRef.current.scrollHeight
         const contentWidth = contentRef.current.scrollWidth
-        if (isTooltipVisible) {
-          contentHeight += tooltipHeight
-        }
         window.electronAPI.updateContentDimensions({
           width: contentWidth,
           height: contentHeight
@@ -230,34 +183,24 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
       }
     }
 
-    // Initialize resize observer
     const resizeObserver = new ResizeObserver(updateDimensions)
     if (contentRef.current) {
       resizeObserver.observe(contentRef.current)
     }
     updateDimensions()
 
-    // Set up event listeners
     const cleanupFunctions = [
       window.electronAPI.onScreenshotTaken(() => refetch()),
       window.electronAPI.onResetView(() => {
-        // Set resetting state first
         setIsResetting(true)
-
-        // Clear the queries
         queryClient.removeQueries(["solution"])
         queryClient.removeQueries(["new_solution"])
-
-        // Reset other states
         refetch()
-
-        // After a small delay, clear the resetting state
         setTimeout(() => {
           setIsResetting(false)
         }, 0)
       }),
       window.electronAPI.onSolutionStart(async () => {
-        // Reset UI state for a new solution
         setSolutionData(null)
         setThoughtsData(null)
         setTimeComplexityData(null)
@@ -265,7 +208,6 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
         setCustomContent(null)
         setAudioResult(null)
 
-        // Start audio recording from user's microphone
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
           const mediaRecorder = new MediaRecorder(stream)
@@ -273,48 +215,44 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
           mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
           mediaRecorder.start()
           setAudioRecording(true)
-          // Record for 5 seconds (or adjust as needed)
           setTimeout(() => mediaRecorder.stop(), 5000)
           mediaRecorder.onstop = async () => {
             setAudioRecording(false)
-            const blob = new Blob(chunks, { type: chunks[0]?.type || 'audio/webm' })
+            const blob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" })
             const reader = new FileReader()
             reader.onloadend = async () => {
-              const base64Data = (reader.result as string).split(',')[1]
-              // Send audio to Gemini for analysis
+              const base64Data = (reader.result as string).split(",")[1]
               try {
                 const result = await window.electronAPI.analyzeAudioFromBase64(
                   base64Data,
                   blob.type
                 )
-                // Store result in react-query cache
                 queryClient.setQueryData(["audio_result"], result)
                 setAudioResult(result)
+                showToast("Audio Processed", "Audio clip analyzed successfully", "success")
               } catch (err) {
-                console.error('Audio analysis failed:', err)
+                showToast("Audio Analysis Failed", "Failed to analyze audio clip", "error")
+                console.error("Audio recording error:", err)
               }
             }
             reader.readAsDataURL(blob)
           }
         } catch (err) {
-          console.error('Audio recording error:', err)
+          console.error("Audio recording error:", err)
         }
 
-        // Simulate receiving custom content shortly after start
         setTimeout(() => {
           setCustomContent(
             "This is the dynamically generated content appearing after loading starts."
           )
-        }, 1500) // Example delay
+        }, 1500)
       }),
-      //if there was an error processing the initial solution
       window.electronAPI.onSolutionError((error: string) => {
         showToast(
           "Processing Failed",
-          "There was an error processing your extra screenshots.",
+          "There was an error processing your solution.",
           "error"
         )
-        // Reset solutions in the cache (even though this shouldn't ever happen) and complexities to previous states
         const solution = queryClient.getQueryData(["solution"]) as {
           code: string
           thoughts: string[]
@@ -322,7 +260,7 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
           space_complexity: string
         } | null
         if (!solution) {
-          setView("queue") //make sure that this is correct. or like make sure there's a toast or something
+          setView("queue")
         }
         setSolutionData(solution?.code || null)
         setThoughtsData(solution?.thoughts || null)
@@ -330,44 +268,32 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
         setSpaceComplexityData(solution?.space_complexity || null)
         console.error("Processing error:", error)
       }),
-      //when the initial solution is generated, we'll set the solution data to that
       window.electronAPI.onSolutionSuccess((data) => {
         if (!data?.solution) {
           console.warn("Received empty or invalid solution data")
           return
         }
 
-        console.log({ solution: data.solution })
-
-        const solutionData = {
+        const solutionDataVal = {
           code: data.solution.code,
           thoughts: data.solution.thoughts,
           time_complexity: data.solution.time_complexity,
           space_complexity: data.solution.space_complexity
         }
 
-        queryClient.setQueryData(["solution"], solutionData)
-        setSolutionData(solutionData.code || null)
-        setThoughtsData(solutionData.thoughts || null)
-        setTimeComplexityData(solutionData.time_complexity || null)
-        setSpaceComplexityData(solutionData.space_complexity || null)
+        queryClient.setQueryData(["solution"], solutionDataVal)
+        setSolutionData(solutionDataVal.code || null)
+        setThoughtsData(solutionDataVal.thoughts || null)
+        setTimeComplexityData(solutionDataVal.time_complexity || null)
+        setSpaceComplexityData(solutionDataVal.space_complexity || null)
       }),
-
-      //########################################################
-      //DEBUG EVENTS
-      //########################################################
       window.electronAPI.onDebugStart(() => {
-        //we'll set the debug processing state to true and use that to render a little loader
         setDebugProcessing(true)
       }),
-      //the first time debugging works, we'll set the view to debug and populate the cache with the data
       window.electronAPI.onDebugSuccess((data) => {
-        console.log({ debug_data: data })
-
         queryClient.setQueryData(["new_solution"], data.solution)
         setDebugProcessing(false)
       }),
-      //when there was an error in the initial debugging, we'll show a toast and stop the little generating pulsing thing.
       window.electronAPI.onDebugError(() => {
         showToast(
           "Processing Failed",
@@ -389,7 +315,7 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
       resizeObserver.disconnect()
       cleanupFunctions.forEach((cleanup) => cleanup())
     }
-  }, [isTooltipVisible, tooltipHeight])
+  }, [queryClient, setView])
 
   useEffect(() => {
     setProblemStatementData(
@@ -402,12 +328,10 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
         setProblemStatementData(
           queryClient.getQueryData(["problem_statement"]) || null
         )
-        // If this is from audio processing, show it in the custom content section
-        const audioResult = queryClient.getQueryData(["audio_result"]) as AudioResult | undefined;
-        if (audioResult) {
-          // Update all relevant sections when audio result is received
+        const audioResultVal = queryClient.getQueryData(["audio_result"]) as AudioResult | undefined
+        if (audioResultVal) {
           setProblemStatementData({
-            problem_statement: audioResult.text,
+            problem_statement: audioResultVal.text,
             input_format: {
               description: "Generated from audio input",
               parameters: []
@@ -424,11 +348,11 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
             test_cases: [],
             validation_type: "manual",
             difficulty: "custom"
-          });
-          setSolutionData(null); // Reset solution to trigger loading state
-          setThoughtsData(null);
-          setTimeComplexityData(null);
-          setSpaceComplexityData(null);
+          })
+          setSolutionData(null)
+          setThoughtsData(null)
+          setTimeComplexityData(null)
+          setSpaceComplexityData(null)
         }
       }
       if (event?.query.queryKey[0] === "solution") {
@@ -448,22 +372,15 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
     return () => unsubscribe()
   }, [queryClient])
 
-  const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
-    setIsTooltipVisible(visible)
-    setTooltipHeight(height)
-  }
-
   return (
     <>
       {!isResetting && queryClient.getQueryData(["new_solution"]) ? (
-        <>
-          <Debug
-            isProcessing={debugProcessing}
-            setIsProcessing={setDebugProcessing}
-          />
-        </>
+        <Debug
+          isProcessing={debugProcessing}
+          setIsProcessing={setDebugProcessing}
+        />
       ) : (
-        <div ref={contentRef} className="relative space-y-3 px-4 py-3">
+        <div ref={contentRef} className="bg-transparent p-1 select-text">
           <Toast
             open={toastOpen}
             onOpenChange={setToastOpen}
@@ -474,99 +391,75 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
             <ToastDescription>{toastMessage.description}</ToastDescription>
           </Toast>
 
-          {/* Conditionally render the screenshot queue if solutionData is available */}
-          {solutionData && (
-            <div className="bg-transparent w-fit">
-              <div className="pb-3">
-                <div className="space-y-3 w-fit">
-                  <ScreenshotQueue
-                    isLoading={debugProcessing}
-                    screenshots={extraScreenshots}
-                    onDeleteScreenshot={handleDeleteExtraScreenshot}
-                  />
-                </div>
+          {!problemStatementData ? (
+            <div className="bg-[#0a0a0a] border border-[#262626] text-[#00ff00] font-mono text-xs p-4 w-[280px] h-[90px] flex flex-col justify-between rounded-none shadow-2xl">
+              <div className="flex justify-between items-center">
+                <span>&gt; wingman_ai --status solving</span>
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              </div>
+              <div className="text-neutral-500 text-[10px] uppercase tracking-wider">
+                Generating code...
               </div>
             </div>
-          )}
-
-          {/* Navbar of commands with the SolutionsHelper */}
-          <SolutionCommands
-            extraScreenshots={extraScreenshots}
-            onTooltipVisibilityChange={handleTooltipVisibilityChange}
-          />
-
-          {/* Main Content - Modified width constraints */}
-          <div className="w-full text-sm text-black bg-black/60 rounded-md">
-            <div className="rounded-lg overflow-hidden">
-              <div className="px-4 py-3 space-y-4 max-w-full">
-                {/* Show Screenshot or Audio Result as main output if validation_type is manual */}
-                {problemStatementData?.validation_type === "manual" ? (
+          ) : (
+            <div className="bg-[#0a0a0a] border border-[#262626] text-gray-200 font-mono text-xs p-4 w-[640px] rounded-none shadow-2xl flex flex-col gap-3">
+              <div className="flex justify-between items-center border-b border-[#262626] pb-2 text-green-500">
+                <span>&gt; wingman_ai --output solution</span>
+                <span className="text-neutral-500 text-[10px] uppercase tracking-wider">
+                  Ctrl+B: HIDE | Ctrl+L: RE-CAPTURE
+                </span>
+              </div>
+              <div className="overflow-hidden">
+                {problemStatementData.validation_type === "manual" ? (
                   <ContentSection
                     title={problemStatementData?.output_format?.subtype === "voice" ? "Audio Result" : "Screenshot Result"}
                     content={problemStatementData.problem_statement}
                     isLoading={false}
                   />
                 ) : (
-                  <>
-                    {/* Problem Statement Section - Only for non-manual */}
+                  <div className="space-y-4">
                     <ContentSection
                       title={problemStatementData?.output_format?.subtype === "voice" ? "Voice Input" : "Problem Statement"}
                       content={problemStatementData?.problem_statement}
-                      isLoading={!problemStatementData}
+                      isLoading={false}
                     />
-                    {/* Show loading state when waiting for solution */}
-                    {problemStatementData && !solutionData && (
-                      <div className="mt-4 flex">
-                        <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
-                          {problemStatementData?.output_format?.subtype === "voice" 
-                            ? "Processing voice input..." 
-                            : "Generating solutions..."}
-                        </p>
-                      </div>
-                    )}
-                    {/* Solution Sections (legacy, only for non-manual) */}
                     {solutionData && (
                       <>
                         <ContentSection
                           title="Analysis"
                           content={
                             thoughtsData && (
-                              <div className="space-y-3">
-                                <div className="space-y-1">
-                                  {thoughtsData.map((thought, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-start gap-2"
-                                    >
-                                      <div className="w-1 h-1 rounded-full bg-blue-400/80 mt-2 shrink-0" />
-                                      <div>{thought}</div>
-                                    </div>
-                                  ))}
-                                </div>
+                              <div className="space-y-1">
+                                {thoughtsData.map((thought, index) => (
+                                  <div key={index} className="flex items-start gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-none bg-blue-500 mt-1.5 shrink-0" />
+                                    <div>{thought}</div>
+                                  </div>
+                                ))}
                               </div>
                             )
                           }
-                          isLoading={!thoughtsData}
+                          isLoading={false}
                         />
                         <SolutionSection
                           title={problemStatementData?.output_format?.subtype === "voice" ? "Response" : "Solution"}
                           content={solutionData}
-                          isLoading={!solutionData}
+                          isLoading={false}
                         />
                         {problemStatementData?.output_format?.subtype !== "voice" && (
                           <ComplexitySection
                             timeComplexity={timeComplexityData}
                             spaceComplexity={spaceComplexityData}
-                            isLoading={!timeComplexityData || !spaceComplexityData}
+                            isLoading={false}
                           />
                         )}
                       </>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </>

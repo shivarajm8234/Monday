@@ -77,6 +77,28 @@ export class ShortcutsHelper {
       }
     })
 
+    globalShortcut.register("CommandOrControl+L", async () => {
+      const mainWindow = this.appState.getMainWindow()
+      if (mainWindow) {
+        console.log("Ctrl+L: Clearing queues, taking screenshot, and solving...")
+        try {
+          this.appState.clearQueues()
+          this.appState.setView("queue")
+          
+          const screenshotPath = await this.appState.takeScreenshot()
+          const preview = await this.appState.getImagePreview(screenshotPath)
+          mainWindow.webContents.send("screenshot-taken", {
+            path: screenshotPath,
+            preview
+          })
+          
+          await this.appState.processingHelper.processScreenshots()
+        } catch (error) {
+          console.error("Error during Ctrl+L screenshot and solve:", error)
+        }
+      }
+    })
+
     // Unregister shortcuts when quitting
     app.on("will-quit", () => {
       globalShortcut.unregisterAll()

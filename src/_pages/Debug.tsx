@@ -1,10 +1,8 @@
-// Debug.tsx
 import React, { useState, useEffect, useRef } from "react"
-import { useQuery, useQueryClient } from "react-query"
+import { useQueryClient } from "react-query"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { ComplexitySection, ContentSection } from "./Solutions"
-import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
 import {
   Toast,
   ToastDescription,
@@ -12,7 +10,6 @@ import {
   ToastTitle,
   ToastVariant
 } from "../components/ui/toast"
-import ExtraScreenshotsQueueHelper from "../components/Solutions/SolutionCommands"
 import { diffLines } from "diff"
 
 type DiffLine = {
@@ -20,14 +17,6 @@ type DiffLine = {
   added?: boolean
   removed?: boolean
 }
-
-const syntaxHighlighterStyles = {
-  ".syntax-line": {
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    overflowWrap: "break-word"
-  }
-} as const
 
 const CodeComparisonSection = ({
   oldCode,
@@ -41,32 +30,27 @@ const CodeComparisonSection = ({
   const computeDiff = () => {
     if (!oldCode || !newCode) return { leftLines: [], rightLines: [] }
 
-    // Normalize line endings and clean up the code
     const normalizeCode = (code: string) => {
       return code
-        .replace(/\r\n/g, "\n") // Convert Windows line endings to Unix
-        .replace(/\r/g, "\n") // Convert remaining carriage returns
-        .trim() // Remove leading/trailing whitespace
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .trim()
     }
 
     const normalizedOldCode = normalizeCode(oldCode)
     const normalizedNewCode = normalizeCode(newCode)
 
-    // Generate the diff
     const diff = diffLines(normalizedOldCode, normalizedNewCode, {
       newlineIsToken: true,
-      ignoreWhitespace: true // Changed to true to better handle whitespace differences
+      ignoreWhitespace: true
     })
 
-    // Process the diff to create parallel arrays
     const leftLines: DiffLine[] = []
     const rightLines: DiffLine[] = []
 
     diff.forEach((part) => {
       if (part.added) {
-        // Add empty lines to left side
         leftLines.push(...Array(part.count || 0).fill({ value: "" }))
-        // Add new lines to right side, filter out empty lines at the end
         rightLines.push(
           ...part.value
             .split("\n")
@@ -77,7 +61,6 @@ const CodeComparisonSection = ({
             }))
         )
       } else if (part.removed) {
-        // Add removed lines to left side, filter out empty lines at the end
         leftLines.push(
           ...part.value
             .split("\n")
@@ -87,10 +70,8 @@ const CodeComparisonSection = ({
               removed: true
             }))
         )
-        // Add empty lines to right side
         rightLines.push(...Array(part.count || 0).fill({ value: "" }))
       } else {
-        // Add unchanged lines to both sides
         const lines = part.value.split("\n").filter((line) => line.length > 0)
         leftLines.push(...lines.map((line) => ({ value: line })))
         rightLines.push(...lines.map((line) => ({ value: line })))
@@ -103,8 +84,8 @@ const CodeComparisonSection = ({
   const { leftLines, rightLines } = computeDiff()
 
   return (
-    <div className="space-y-1.5">
-      <h2 className="text-[13px] font-medium text-white tracking-wide">
+    <div className="space-y-1.5 font-mono">
+      <h2 className="text-[13px] font-semibold text-green-500 tracking-wide">
         Code Comparison
       </h2>
       {isLoading ? (
@@ -116,24 +97,26 @@ const CodeComparisonSection = ({
           </div>
         </div>
       ) : (
-        <div className="flex flex-row gap-0.5 bg-[#161b22] rounded-lg overflow-hidden">
+        <div className="flex flex-row gap-2 bg-[#0c0c0c] border border-[#262626] overflow-hidden">
           {/* Previous Code */}
-          <div className="w-1/2 border-r border-gray-700">
-            <div className="bg-[#2d333b] px-3 py-1.5">
-              <h3 className="text-[11px] font-medium text-gray-200">
+          <div className="w-1/2 border-r border-[#262626]">
+            <div className="bg-[#121212] px-3 py-1 border-b border-[#262626]">
+              <h3 className="text-[11px] font-semibold text-neutral-400">
                 Previous Version
               </h3>
             </div>
-            <div className="p-3 overflow-x-auto">
+            <div className="p-3 overflow-x-auto text-[11px]">
               <SyntaxHighlighter
                 language="python"
                 style={dracula}
                 customStyle={{
                   maxWidth: "100%",
                   margin: 0,
-                  padding: "1rem",
+                  padding: "0.5rem",
                   whiteSpace: "pre-wrap",
-                  wordBreak: "break-all"
+                  wordBreak: "break-all",
+                  fontSize: "11px",
+                  background: "transparent"
                 }}
                 wrapLines={true}
                 showLineNumbers={true}
@@ -156,21 +139,23 @@ const CodeComparisonSection = ({
 
           {/* New Code */}
           <div className="w-1/2">
-            <div className="bg-[#2d333b] px-3 py-1.5">
-              <h3 className="text-[11px] font-medium text-gray-200">
+            <div className="bg-[#121212] px-3 py-1 border-b border-[#262626]">
+              <h3 className="text-[11px] font-semibold text-neutral-400">
                 New Version
               </h3>
             </div>
-            <div className="p-3 overflow-x-auto">
+            <div className="p-3 overflow-x-auto text-[11px]">
               <SyntaxHighlighter
                 language="python"
                 style={dracula}
                 customStyle={{
                   maxWidth: "100%",
                   margin: 0,
-                  padding: "1rem",
+                  padding: "0.5rem",
                   whiteSpace: "pre-wrap",
-                  wordBreak: "break-all"
+                  wordBreak: "break-all",
+                  fontSize: "11px",
+                  background: "transparent"
                 }}
                 wrapLines={true}
                 showLineNumbers={true}
@@ -222,24 +207,6 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
     variant: "neutral"
   })
 
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const [tooltipHeight, setTooltipHeight] = useState(0)
-
-  const { data: extraScreenshots = [], refetch } = useQuery({
-    queryKey: ["extras"],
-    queryFn: async () => {
-      try {
-        const existing = await window.electronAPI.getScreenshots()
-        return existing
-      } catch (error) {
-        console.error("Error loading extra screenshots:", error)
-        return []
-      }
-    },
-    staleTime: Infinity,
-    cacheTime: Infinity
-  })
-
   const showToast = (
     title: string,
     description: string,
@@ -249,26 +216,7 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
     setToastOpen(true)
   }
 
-  const handleDeleteExtraScreenshot = async (index: number) => {
-    const screenshotToDelete = extraScreenshots[index]
-
-    try {
-      const response = await window.electronAPI.deleteScreenshot(
-        screenshotToDelete.path
-      )
-
-      if (response.success) {
-        refetch()
-      } else {
-        console.error("Failed to delete extra screenshot:", response.error)
-      }
-    } catch (error) {
-      console.error("Error deleting extra screenshot:", error)
-    }
-  }
-
   useEffect(() => {
-    // Try to get the new solution data from cache first
     const newSolution = queryClient.getQueryData(["new_solution"]) as {
       old_code: string
       new_code: string
@@ -277,7 +225,6 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
       space_complexity: string
     } | null
 
-    // If we have cached data, set all state variables to the cached data
     if (newSolution) {
       setOldCode(newSolution.old_code || null)
       setNewCode(newSolution.new_code || null)
@@ -287,12 +234,9 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
       setIsProcessing(false)
     }
 
-    // Set up event listeners
     const cleanupFunctions = [
-      window.electronAPI.onScreenshotTaken(() => refetch()),
-      window.electronAPI.onResetView(() => refetch()),
       window.electronAPI.onDebugSuccess(() => {
-        setIsProcessing(false) //all the other stuff ahapepns in the parent component, so we just need to do this.
+        setIsProcessing(false)
       }),
       window.electronAPI.onDebugStart(() => {
         setIsProcessing(true)
@@ -308,14 +252,10 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
       })
     ]
 
-    // Set up resize observer
     const updateDimensions = () => {
       if (contentRef.current) {
-        let contentHeight = contentRef.current.scrollHeight
+        const contentHeight = contentRef.current.scrollHeight
         const contentWidth = contentRef.current.scrollWidth
-        if (isTooltipVisible) {
-          contentHeight += tooltipHeight
-        }
         window.electronAPI.updateContentDimensions({
           width: contentWidth,
           height: contentHeight
@@ -333,15 +273,10 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
       resizeObserver.disconnect()
       cleanupFunctions.forEach((cleanup) => cleanup())
     }
-  }, [queryClient])
-
-  const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
-    setIsTooltipVisible(visible)
-    setTooltipHeight(height)
-  }
+  }, [queryClient, setIsProcessing])
 
   return (
-    <div ref={contentRef} className="relative space-y-3 px-4 py-3 ">
+    <div ref={contentRef} className="bg-transparent p-1 select-text">
       <Toast
         open={toastOpen}
         onOpenChange={setToastOpen}
@@ -352,63 +287,46 @@ const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
         <ToastDescription>{toastMessage.description}</ToastDescription>
       </Toast>
 
-      {/* Conditionally render the screenshot queue */}
-      <div className="bg-transparent w-fit">
-        <div className="pb-3">
-          <div className="space-y-3 w-fit">
-            <ScreenshotQueue
-              screenshots={extraScreenshots}
-              onDeleteScreenshot={handleDeleteExtraScreenshot}
-              isLoading={isProcessing}
-            />
-          </div>
+      <div className="bg-[#0a0a0a] border border-[#262626] text-gray-200 font-mono text-xs p-4 w-[640px] rounded-none shadow-2xl flex flex-col gap-3">
+        <div className="flex justify-between items-center border-b border-[#262626] pb-2 text-green-500">
+          <span>&gt; wingman_ai --output debug</span>
+          <span className="text-neutral-500 text-[10px] uppercase tracking-wider">
+            Ctrl+B: HIDE | Ctrl+L: RE-CAPTURE
+          </span>
         </div>
-      </div>
 
-      {/* Navbar of commands with the tooltip */}
-      <ExtraScreenshotsQueueHelper
-        extraScreenshots={extraScreenshots}
-        onTooltipVisibilityChange={handleTooltipVisibilityChange}
-      />
-
-      {/* Main Content */}
-      <div className="w-full text-sm text-black bg-black/60 rounded-md">
-        <div className="rounded-lg overflow-hidden">
-          <div className="px-4 py-3 space-y-4">
-            {/* Thoughts Section */}
-            <ContentSection
-              title="What I Changed"
-              content={
-                thoughtsData && (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      {thoughtsData.map((thought, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <div className="w-1 h-1 rounded-full bg-blue-400/80 mt-2 shrink-0" />
-                          <div>{thought}</div>
-                        </div>
-                      ))}
+        <div className="overflow-hidden space-y-4">
+          {/* Thoughts Section */}
+          <ContentSection
+            title="What I Changed"
+            content={
+              thoughtsData && (
+                <div className="space-y-1">
+                  {thoughtsData.map((thought, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-none bg-blue-500 mt-1.5 shrink-0" />
+                      <div>{thought}</div>
                     </div>
-                  </div>
-                )
-              }
-              isLoading={!thoughtsData}
-            />
+                  ))}
+                </div>
+              )
+            }
+            isLoading={!thoughtsData}
+          />
 
-            {/* Code Comparison Section */}
-            <CodeComparisonSection
-              oldCode={oldCode}
-              newCode={newCode}
-              isLoading={!oldCode || !newCode}
-            />
+          {/* Code Comparison Section */}
+          <CodeComparisonSection
+            oldCode={oldCode}
+            newCode={newCode}
+            isLoading={!oldCode || !newCode}
+          />
 
-            {/* Complexity Section */}
-            <ComplexitySection
-              timeComplexity={timeComplexityData}
-              spaceComplexity={spaceComplexityData}
-              isLoading={!timeComplexityData || !spaceComplexityData}
-            />
-          </div>
+          {/* Complexity Section */}
+          <ComplexitySection
+            timeComplexity={timeComplexityData}
+            spaceComplexity={spaceComplexityData}
+            isLoading={!timeComplexityData || !spaceComplexityData}
+          />
         </div>
       </div>
     </div>

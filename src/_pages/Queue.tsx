@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useQuery } from "react-query"
-import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
 import {
   Toast,
   ToastTitle,
@@ -8,7 +7,6 @@ import {
   ToastVariant,
   ToastMessage
 } from "../components/ui/toast"
-import QueueCommands from "../components/Queue/QueueCommands"
 
 interface QueueProps {
   setView: React.Dispatch<React.SetStateAction<"queue" | "solutions" | "debug">>
@@ -22,11 +20,9 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     variant: "neutral"
   })
 
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false)
-  const [tooltipHeight, setTooltipHeight] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const { data: screenshots = [], refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
+  const { refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
     ["screenshots"],
     async () => {
       try {
@@ -46,21 +42,6 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     }
   )
 
-  const handleResetQueue = async () => {
-    try {
-      const response = await window.electronAPI.resetScreenshotQueue()
-      if (response.success) {
-        refetch()
-        showToast("Success", "Screenshot queue cleared", "success")
-      } else {
-        showToast("Error", "Failed to clear queue", "error")
-      }
-    } catch (error) {
-      console.error("Error resetting queue:", error)
-      showToast("Error", "Failed to clear queue", "error")
-    }
-  }
-
   const showToast = (
     title: string,
     description: string,
@@ -70,33 +51,11 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     setToastOpen(true)
   }
 
-  const handleDeleteScreenshot = async (index: number) => {
-    const screenshotToDelete = screenshots[index]
-
-    try {
-      const response = await window.electronAPI.deleteScreenshot(
-        screenshotToDelete.path
-      )
-
-      if (response.success) {
-        refetch()
-      } else {
-        console.error("Failed to delete screenshot:", response.error)
-        showToast("Error", "Failed to delete the screenshot file", "error")
-      }
-    } catch (error) {
-      console.error("Error deleting screenshot:", error)
-    }
-  }
-
   useEffect(() => {
     const updateDimensions = () => {
       if (contentRef.current) {
-        let contentHeight = contentRef.current.scrollHeight
+        const contentHeight = contentRef.current.scrollHeight
         const contentWidth = contentRef.current.scrollWidth
-        if (isTooltipVisible) {
-          contentHeight += tooltipHeight
-        }
         window.electronAPI.updateContentDimensions({
           width: contentWidth,
           height: contentHeight
@@ -135,50 +94,27 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
       resizeObserver.disconnect()
       cleanupFunctions.forEach((cleanup) => cleanup())
     }
-  }, [isTooltipVisible, tooltipHeight])
-
-  const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
-    setIsTooltipVisible(visible)
-    setTooltipHeight(height)
-  }
+  }, [refetch, setView])
 
   return (
-    <div ref={contentRef} className="bg-transparent w-fit">
-      <div className="px-4 py-3">
-        <Toast
-          open={toastOpen}
-          onOpenChange={setToastOpen}
-          variant={toastMessage.variant}
-          duration={3000}
-        >
-          <ToastTitle>{toastMessage.title}</ToastTitle>
-          <ToastDescription>{toastMessage.description}</ToastDescription>
-        </Toast>
+    <div ref={contentRef} className="bg-transparent p-1 select-none">
+      <Toast
+        open={toastOpen}
+        onOpenChange={setToastOpen}
+        variant={toastMessage.variant}
+        duration={3000}
+      >
+        <ToastTitle>{toastMessage.title}</ToastTitle>
+        <ToastDescription>{toastMessage.description}</ToastDescription>
+      </Toast>
 
-        <div className="space-y-3 w-fit">
-          {/* Screenshot Counter */}
-          {screenshots.length > 0 && (
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-white text-xs">
-                📸 {screenshots.length} screenshot{screenshots.length > 1 ? 's' : ''} in queue
-              </div>
-              <button
-                onClick={handleResetQueue}
-                className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-              >
-                Clear All
-              </button>
-            </div>
-          )}
-          <ScreenshotQueue
-            isLoading={false}
-            screenshots={screenshots}
-            onDeleteScreenshot={handleDeleteScreenshot}
-          />
-          <QueueCommands
-            screenshots={screenshots}
-            onTooltipVisibilityChange={handleTooltipVisibilityChange}
-          />
+      <div className="bg-[#0a0a0a] border border-[#262626] text-[#00ff00] font-mono text-xs p-4 w-[280px] h-[90px] flex flex-col justify-between rounded-none shadow-2xl">
+        <div className="flex justify-between items-center">
+          <span>&gt; wingman_ai --status ready</span>
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        </div>
+        <div className="text-neutral-500 text-[10px] uppercase tracking-wider">
+          Ctrl+L: Capture & Solve
         </div>
       </div>
     </div>
