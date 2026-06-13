@@ -18,6 +18,7 @@ declare global {
       //GLOBAL EVENTS
       //TODO: CHECK THAT PROCESSING NO SCREENSHOTS AND TAKE SCREENSHOTS ARE BOTH CONDITIONAL
       onUnauthorized: (callback: () => void) => () => void
+      onResetView: (callback: () => void) => () => void
       onScreenshotTaken: (
         callback: (data: { path: string; preview: string }) => void
       ) => () => void

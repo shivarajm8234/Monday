@@ -186,7 +186,7 @@ interface DebugProps {
   setIsProcessing: (isProcessing: boolean) => void
 }
 
-const Debug: React.FC<DebugProps> = ({ isProcessing, setIsProcessing }) => {
+const Debug: React.FC<DebugProps> = ({ isProcessing: _isProcessing, setIsProcessing }) => {
   const queryClient = useQueryClient()
   const contentRef = useRef<HTMLDivElement>(null)
 
